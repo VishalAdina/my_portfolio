@@ -1,133 +1,137 @@
-import { useState } from 'react';
-import { Navbar } from './components/Navbar';
-import { HeroSection } from './components/HeroSection';
-import { VisionSection } from './components/VisionSection';
-import { SelectedWorkSection } from './components/SelectedWorkSection';
-import { ExperienceSection } from './components/ExperienceSection';
-import { TechStackSection } from './components/TechStackSection';
-import { PipelineArchitectureSection } from './components/PipelineArchitectureSection';
-import { AchievementsSection } from './components/AchievementsSection';
-import { ContactSection } from './components/ContactSection';
-import { Footer } from './components/Footer';
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
+import type { Project } from './types';
 
-import { ProjectModal } from './components/ProjectModal';
-import { ResumeModal } from './components/ResumeModal';
-import { ArchitectureInspectorModal } from './components/ArchitectureInspectorModal';
-import { ExperienceModal } from './components/ExperienceModal';
-import { AllProjectsModal } from './components/AllProjectsModal';
-import { CommandPalette } from './components/CommandPalette';
+import { Navbar } from './components/layout/Navbar';
+import { Footer } from './components/layout/Footer';
+import { Cursor } from './components/ui/Cursor';
+import { Preloader } from './components/ui/Preloader';
 
-import { Project } from './types';
+import { HeroSection } from './components/sections/HeroSection';
+import { AboutSection } from './components/sections/AboutSection';
+import { ProjectsSection } from './components/sections/ProjectsSection';
+import { ExperienceSection } from './components/sections/ExperienceSection';
+import { SkillsSection } from './components/sections/SkillsSection';
+import { ArchitectureSection } from './components/sections/ArchitectureSection';
+import { PipelineSection } from './components/sections/PipelineSection';
+import { AchievementsSection } from './components/sections/AchievementsSection';
+import { ContactSection } from './components/sections/ContactSection';
+
+import { useSmoothScroll } from './lib/scroll';
+import { useScrollReveal } from './lib/useScrollReveal';
+
+/**
+ * Modals are code-split: the first paint never pays for the case-study,
+ * résumé or command-palette bundles. Each one is fetched lazily the first
+ * time it is opened (and warmed up during idle time afterwards).
+ */
+const ProjectModal = lazy(() =>
+  import('./components/modals/ProjectModal').then((m) => ({ default: m.ProjectModal })),
+);
+const ResumeModal = lazy(() =>
+  import('./components/modals/ResumeModal').then((m) => ({ default: m.ResumeModal })),
+);
+const ExperienceModal = lazy(() =>
+  import('./components/modals/ExperienceModal').then((m) => ({ default: m.ExperienceModal })),
+);
+const AllProjectsModal = lazy(() =>
+  import('./components/modals/AllProjectsModal').then((m) => ({ default: m.AllProjectsModal })),
+);
+const ArchitectureInspectorModal = lazy(() =>
+  import('./components/modals/ArchitectureInspectorModal').then((m) => ({
+    default: m.ArchitectureInspectorModal,
+  })),
+);
+const CommandPalette = lazy(() =>
+  import('./components/modals/CommandPalette').then((m) => ({ default: m.CommandPalette })),
+);
 
 export default function App() {
+  const [introDone, setIntroDone] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [inspectedNodeId, setInspectedNodeId] = useState<string | null>(null);
   const [resumeOpen, setResumeOpen] = useState(false);
   const [experienceOpen, setExperienceOpen] = useState(false);
   const [allProjectsOpen, setAllProjectsOpen] = useState(false);
-  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
 
-  const scrollToProjects = () => {
-    const el = document.getElementById('projects');
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
+  useSmoothScroll();
+  useScrollReveal();
 
-  const scrollToContact = () => {
-    const el = document.getElementById('contact');
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
+  const handleIntroComplete = useCallback(() => setIntroDone(true), []);
+
+  // Warm the lazy chunks once the page is idle — no one waits on a modal again
+  useEffect(() => {
+    const warm = () => {
+      void import('./components/modals/ProjectModal');
+      void import('./components/modals/ResumeModal');
+      void import('./components/modals/CommandPalette');
+    };
+    const idle = window.requestIdleCallback?.(warm, { timeout: 4000 });
+    const timer = idle ? undefined : window.setTimeout(warm, 2500);
+    return () => {
+      if (idle) window.cancelIdleCallback?.(idle);
+      if (timer) window.clearTimeout(timer);
+    };
+  }, []);
 
   return (
-    <div className="min-h-screen bg-[#F9F9F8] bg-dot-grid text-slate-800 antialiased selection:bg-blue-600 selection:text-white relative overflow-x-hidden">
-      {/* Primary Navigation Header */}
-      <Navbar
-        onOpenResume={() => setResumeOpen(true)}
-        onOpenContact={scrollToContact}
-        onOpenCommandPalette={() => setCommandPaletteOpen(true)}
-      />
+    <div className="grain relative min-h-screen bg-bg">
+      <a
+        href="#about"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[90] focus:border focus:border-accent focus:bg-bg focus:px-4 focus:py-2 focus:font-mono focus:text-xs focus:text-fg"
+      >
+        Skip to content
+      </a>
 
-      {/* Main Content Sections */}
+      <Preloader onComplete={handleIntroComplete} />
+      <Cursor />
+      <Navbar onOpenResume={() => setResumeOpen(true)} onOpenCommandPalette={() => setPaletteOpen(true)} />
+
       <main>
-        {/* Section 01: Hero / About */}
-        <HeroSection
-          onScrollToProjects={scrollToProjects}
-          onOpenResume={() => setResumeOpen(true)}
-        />
-
-        {/* Section 02: Vision / Full-Stack Agentic AI Engineer */}
-        <VisionSection
-          onScrollToProjects={scrollToProjects}
-          onInspectNode={(nodeId) => setInspectedNodeId(nodeId)}
-        />
-
-        {/* Section 03: Selected Work */}
-        <SelectedWorkSection
-          onSelectProject={(project) => setSelectedProject(project)}
+        <HeroSection introDone={introDone} onOpenResume={() => setResumeOpen(true)} />
+        <AboutSection />
+        <ProjectsSection
+          onSelectProject={setSelectedProject}
           onViewAllProjects={() => setAllProjectsOpen(true)}
         />
-
-        {/* Section 04: Experience */}
-        <ExperienceSection
-          onOpenExperienceDetails={() => setExperienceOpen(true)}
-        />
-
-        {/* Section 05: Tech Stack */}
-        <TechStackSection />
-
-        {/* Section 06: Project Architecture (Pipeline) */}
-        <PipelineArchitectureSection
-          onInspectNode={(nodeId) => setInspectedNodeId(nodeId)}
-        />
-
-        {/* Section 07: Achievements */}
+        <ExperienceSection onOpenExperienceDetails={() => setExperienceOpen(true)} />
+        <SkillsSection />
+        <ArchitectureSection onInspectNode={setInspectedNodeId} />
+        <PipelineSection />
         <AchievementsSection />
-
-        {/* Section 08: Let's Connect */}
         <ContactSection />
       </main>
 
-      {/* Footer */}
-      <Footer onOpenResume={() => setResumeOpen(true)} />
-
-      {/* Command Palette (⌘K) */}
-      <CommandPalette
-        isOpen={commandPaletteOpen}
-        onClose={() => setCommandPaletteOpen(false)}
-        onSelectProject={(proj) => setSelectedProject(proj)}
+      <Footer
         onOpenResume={() => setResumeOpen(true)}
-        onOpenContact={scrollToContact}
+        onOpenCommandPalette={() => setPaletteOpen(true)}
       />
 
-      {/* Interactive Modals */}
-      <ProjectModal
-        project={selectedProject}
-        onClose={() => setSelectedProject(null)}
-      />
+      <Suspense fallback={null}>
+        <ProjectModal project={selectedProject} onClose={() => setSelectedProject(null)} />
 
-      <ResumeModal
-        isOpen={resumeOpen}
-        onClose={() => setResumeOpen(false)}
-      />
+        <ArchitectureInspectorModal
+          nodeId={inspectedNodeId}
+          onClose={() => setInspectedNodeId(null)}
+        />
 
-      <ArchitectureInspectorModal
-        nodeId={inspectedNodeId}
-        onClose={() => setInspectedNodeId(null)}
-      />
+        <ResumeModal isOpen={resumeOpen} onClose={() => setResumeOpen(false)} />
 
-      <ExperienceModal
-        isOpen={experienceOpen}
-        onClose={() => setExperienceOpen(false)}
-      />
+        <ExperienceModal isOpen={experienceOpen} onClose={() => setExperienceOpen(false)} />
 
-      <AllProjectsModal
-        isOpen={allProjectsOpen}
-        onClose={() => setAllProjectsOpen(false)}
-        onSelectProject={(proj) => setSelectedProject(proj)}
-      />
+        <AllProjectsModal
+          isOpen={allProjectsOpen}
+          onClose={() => setAllProjectsOpen(false)}
+          onSelectProject={(project) => setSelectedProject(project)}
+        />
+
+        <CommandPalette
+          isOpen={paletteOpen}
+          onClose={() => setPaletteOpen(false)}
+          onSelectProject={(project) => setSelectedProject(project)}
+          onOpenResume={() => setResumeOpen(true)}
+        />
+      </Suspense>
     </div>
   );
 }

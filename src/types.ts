@@ -1,3 +1,8 @@
+/**
+ * Shared domain types for the portfolio.
+ * Shape of the data contract between `src/data/portfolioData.ts` and the UI.
+ */
+
 export interface Project {
   id: string;
   title: string;
@@ -36,12 +41,22 @@ export interface ExperienceRole {
 }
 
 export interface TechItem {
+  /** Display name — also the key used to look up `TECH_NOTES`. */
   name: string;
-  category: string;
-  iconType: 'svg' | 'material' | 'custom';
-  iconValue?: string;
-  color?: string;
-  description?: string;
+  category: TechCategoryId;
+  /** Short monogram shown in the index column (e.g. "PY", "LG"). */
+  abbr: string;
+  /** Highlighted as a core competency in the UI. */
+  core?: boolean;
+}
+
+export type TechCategoryId = 'languages' | 'frontend' | 'backend' | 'agentic' | 'rag' | 'infra';
+
+export interface TechCategory {
+  id: TechCategoryId;
+  label: string;
+  /** Editorial descriptor rendered next to the category name. */
+  caption: string;
 }
 
 export interface Achievement {
@@ -62,4 +77,22 @@ export interface ArchitectureNode {
   type: 'client' | 'service' | 'ai' | 'storage' | 'external';
   description: string;
   tech: string[];
+}
+
+export interface EducationEntry {
+  institution: string;
+  degree: string;
+  short: string;
+  period: string;
+  location: string;
+  focus: string[];
+  note: string;
+}
+
+export interface NavSection {
+  id: string;
+  label: string;
+  index: string;
+  /** Anchor ids that should also mark this nav item as active. */
+  aliases?: string[];
 }

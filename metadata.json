@@ -1,6 +1,6 @@
 {
-  "name": "Adina Vishal - Full-Stack Agentic AI Engineer Portfolio",
-  "description": "Portfolio of Adina Vishal, a CSIT student and Full-Stack Agentic AI Engineer specializing in RAG systems, AI agents, and scalable backend architecture.",
+  "name": "Adina Vishal — Full-Stack Agentic AI Engineer",
+  "description": "Dark, motion-driven portfolio of Adina Vishal: production RAG pipelines, multi-agent systems and scalable full-stack architecture.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": []
 }
