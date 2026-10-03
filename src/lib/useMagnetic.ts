@@ -21,8 +21,10 @@ export function useMagnetic<T extends HTMLElement = HTMLDivElement>(strength = 0
     const yTo = gsap.quickTo(el, 'y', { duration: 0.55, ease: 'power3.out' });
 
     let active = false;
+    let queued = false;
+    let latest: PointerEvent | null = null;
 
-    const onMove = (e: PointerEvent) => {
+    const track = (e: PointerEvent) => {
       const rect = el.getBoundingClientRect();
       const dx = e.clientX - (rect.left + rect.width / 2);
       const dy = e.clientY - (rect.top + rect.height / 2);
@@ -38,6 +40,20 @@ export function useMagnetic<T extends HTMLElement = HTMLDivElement>(strength = 0
         xTo(0);
         yTo(0);
       }
+    };
+
+    /**
+     * Coalesce to one measurement per frame: pointer events can fire several
+     * times per frame, and each instance reads layout via getBoundingClientRect.
+     */
+    const onMove = (e: PointerEvent) => {
+      latest = e;
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(() => {
+        queued = false;
+        if (latest) track(latest);
+      });
     };
 
     const reset = () => {
