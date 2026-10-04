@@ -36,7 +36,7 @@ export function HeroSection({ introDone, onOpenResume }: HeroProps) {
 
       const tl = gsap.timeline({ defaults: { ease: EASE.out } });
 
-      tl.to('[data-hero-line]', { yPercent: 0, duration: 1.35, stagger: 0.1 })
+     tl.fromTo('[data-hero-line]', { yPercent: 118 }, { yPercent: 0, duration: 1.35, stagger: 0.1 })
         .to('[data-hero-intro]', { opacity: 1, y: 0, duration: 0.9, stagger: 0.07 }, '-=0.95')
         .to('[data-hero-portrait]', { opacity: 1, y: 0, duration: 1.2 }, '-=1.05')
         .to('[data-hero-foot]', { opacity: 1, y: 0, duration: 0.8, stagger: 0.06 }, '-=0.85');
