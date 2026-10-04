@@ -128,10 +128,14 @@
     border-radius: 2px;
   }
 
-  /* Custom cursor takes over on precise pointers only */
-  html.cursor-custom,
-  html.cursor-custom * {
-    cursor: none !important;
+   /* Custom cursor takes over on precise pointers only — and only at widths
+     where the custom cursor layer is actually displayed (lg = 1024px).
+     Below that the native cursor must remain, or there is no cursor at all. */
+  @media (min-width: 1024px) {
+    html.cursor-custom,
+    html.cursor-custom * {
+      cursor: none !important;
+    }
   }
 
   ::-webkit-scrollbar {
